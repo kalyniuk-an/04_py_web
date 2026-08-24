@@ -12,65 +12,65 @@ HTTP_PORT = 3000
 SOCKET_PORT = 5000
 
 def read_file(filename):
-    # file_path = os.path.join(os.path.dirname(__file__), filename)
+
     with open(filename, "rb") as file:
         return file.read()
 
 class HttpServer(BaseHTTPRequestHandler):
+
+    def send_html(self, filemane, status = 200):
+        content = read_file(filemane)
+        self.send_response(status)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(content)))
+        self.end_headers()
+        self.wfile.write(content)
+
+    def send_static(self, filename, content_type):
+        content = read_file(filename)
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Contenr-Length", str(len(content)))
+        self.end_headers()
+        self.wfile.write(content)
+
     def do_GET(self):
-        # print("GET request:", self.path)
-        if self.path == "/":
-            content = read_file("index.html")
-
-            self.send_response(200)
-            self.send_header("Content-Type", "text/html")
-            self.end_headers()
-
-            self.wfile.write(content)
+        if self.path == "/" or self.path == "/index.html":
+            self.send_html("index.html")
+            
         elif self.path == "/message.html":
-            content = read_file("message.html")
-            
-            self.send_response(200)
-            self.send_header("Content-Type", "text/html")
-            self.end_headers()
-            
-            self.wfile.write(content)
+            self.send_html("message.html")
+
         elif self.path == "/logo.png":
-            content = read_file("logo.png")
-            self.send_response(200)
-            self.send_header("Content-Type", "text/html")
-            self.end_headers()
-            self.wfile.write(content)
-        else: 
-            content = read_file("error.html")
-            self.send_response(404)
-            self.send_header("Content-Type", "text/html")
-            self.end_headers()
-            self.wfile.write(content)
+            self.send_static("logo.png", "imge/png")
+
+        elif self.path == "/style.css":
+            self.send_static("style.css", "text/css")
+
+        else:
+            self.send_html("error.html", 404)
+
     def do_POST(self):
-        if self.path == "/message":
-            content_length = int(self.headers.get("Content-Length", 0))
+        if self.path != "/message":
+            self.send_html("error.html", 404)
+            return
 
-            body = self.rfile.read(content_length)
-            body = body.decode("utf-8")
-            form_data = parse_qs(body)
+        content_length = int(self.headers.get("Content-Length", 0))
 
-            username = form_data.get("username", [""])[0]
-            message = form_data.get("message", [""])[0]
+        body = self.rfile.read(content_length)
+        body = body.decode("utf-8")
+        form_data = parse_qs(body)
 
-            print(username)
-            print(message)
+        username = form_data.get("username", [""])[0]
+        message = form_data.get("message", [""])[0]
 
-            data = { 
-                "username": username,
-                "message": message
-            }
+        data = {"username": username, "message": message}
 
-            send_to_socket_server(data)
+        send_to_socket_server(data)
 
-            self.send_response(302)
-            self.send_header("Location", "/")
-            self.end_headers()
+        self.send_response(302)
+        self.send_header("Location", "/")
+        self.end_headers()
 
 def http_server():
     server = HTTPServer((HOST, HTTP_PORT), HttpServer)
@@ -132,5 +132,3 @@ if __name__ == "__main__":
 
     http_thread.join()
     socked_thread.join()
-
-# print(read_file("index.html"))
