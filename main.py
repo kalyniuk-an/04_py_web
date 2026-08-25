@@ -30,7 +30,7 @@ class HttpServer(BaseHTTPRequestHandler):
         content = read_file(filename)
         self.send_response(200)
         self.send_header("Content-Type", content_type)
-        self.send_header("Contenr-Length", str(len(content)))
+        self.send_header("Content-Length", str(len(content)))
         self.end_headers()
         self.wfile.write(content)
 
@@ -42,7 +42,7 @@ class HttpServer(BaseHTTPRequestHandler):
             self.send_html("message.html")
 
         elif self.path == "/logo.png":
-            self.send_static("logo.png", "imge/png")
+            self.send_static("logo.png", "image/png")
 
         elif self.path == "/style.css":
             self.send_static("style.css", "text/css")
